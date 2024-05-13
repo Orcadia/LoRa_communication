@@ -31,31 +31,6 @@ const char* key = "API_WRITE_KEY";
 const int chan_id = CHANNEL_ID;
 WiFiClient client;
 
-void httpRequest(double value1, double value2) {
-  
-
-  if (client.connect(server, 80)) {
-    String datas = "Temperature=" + String(value1) + "&Pression=" + String(value2);
-
-// Envoi de la requête HTTP
-    client.println("POST /update HTTP/1.1");
-    client.println("Host: api.thingspeak.com");
-    client.println("Connection: close");
-    client.println("User-Agent: tech_IOT/1.1");
-    client.println("X-THINGSPEAKAPIKEY: " + String(key));
-    client.println("Content-Type: application/x-www-form-urlencoded");
-
-    // Envoi de la longueur du contenu et du contenu lui-même
-    client.print("Content-Length: " + String(datas.length()));
-    client.print("\n\n");
-    client.print(datas);
-
-    display.drawString(3, 0, "Data sent to ThingSpeak successfully!");
-  } else {
-    display.drawString(3, 0, "Failed to send data to ThingSpeak.");
-  }
-}
-
 void setup() {
   pinMode(16,OUTPUT);
   digitalWrite(16, LOW);    // set GPIO16 low to reset OLED
