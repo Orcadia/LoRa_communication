@@ -1,6 +1,10 @@
 #include <SPI.h>
 #include <LoRa.h>
 #include "SSD1306.h"
+#include <Arduino.h>
+#include <string.h>
+#include <WiFi.h>
+#include <ThingSpeak.h>
  
 SSD1306  display(0x3c, 4, 15);
  
@@ -21,6 +25,37 @@ SSD1306  display(0x3c, 4, 15);
 #define DI0     26
 #define BAND    868E6
  
+const char* ssid = "YOUR_SSID";
+const char* password = "PASSWD";
+const char* key = "API_WRITE_KEY";
+const int chan_id = CHANNEL_ID;
+WiFiClient client;
+
+void httpRequest(double value1, double value2) {
+  
+
+  if (client.connect(server, 80)) {
+    String datas = "Temperature=" + String(value1) + "&Pression=" + String(value2);
+
+// Envoi de la requête HTTP
+    client.println("POST /update HTTP/1.1");
+    client.println("Host: api.thingspeak.com");
+    client.println("Connection: close");
+    client.println("User-Agent: tech_IOT/1.1");
+    client.println("X-THINGSPEAKAPIKEY: " + String(key));
+    client.println("Content-Type: application/x-www-form-urlencoded");
+
+    // Envoi de la longueur du contenu et du contenu lui-même
+    client.print("Content-Length: " + String(datas.length()));
+    client.print("\n\n");
+    client.print(datas);
+
+    display.drawString(3, 0, "Data sent to ThingSpeak successfully!");
+  } else {
+    display.drawString(3, 0, "Failed to send data to ThingSpeak.");
+  }
+}
+
 void setup() {
   pinMode(16,OUTPUT);
   digitalWrite(16, LOW);    // set GPIO16 low to reset OLED
@@ -32,8 +67,19 @@ void setup() {
   display.setTextAlignment(TEXT_ALIGN_LEFT);
    
   Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
   while (!Serial); //if just the the basic function, must connect to a computer
   delay(1000);
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
   Serial.println("LoRa Receiver"); 
   display.drawString(5,5,"LoRa Receiver"); 
   display.display();
@@ -47,6 +93,8 @@ void setup() {
   Serial.println("LoRa Initial OK!");
   display.drawString(5,25,"LoRa Initializing OK!");
   display.display();
+
+  ThingSpeak.begin(client);  // Initialize ThingSpeak
 }
 void loop() {
   // try to parse packet
@@ -56,14 +104,45 @@ void loop() {
     Serial.print("Received packet. ");
     display.clear();
     display.setFont(ArialMT_Plain_10);
-    display.drawString(3, 0, "Received packet ");
+    
+    
     display.display();
     // read packet
     while (LoRa.available()) {
-    String data = LoRa.readString();
-    Serial.print(data);
-    display.drawString(20,22, data);
-    display.display();
+      String data         = LoRa.readString();
+      String temperature  = "";
+      String pressure     = "";
+
+      if(data.startsWith("#",0)){
+        data.replace("#","");
+
+        int delimiterIndex  = data.indexOf(",");
+        //display.drawString(10,22, String(delimiterIndex)); // Debugging
+        if (delimiterIndex != -1) {
+          temperature       = data.substring(0, delimiterIndex);
+          pressure          = data.substring(delimiterIndex + 1);
+
+        }
+        ThingSpeak.setField(1, temperature);
+        ThingSpeak.setField(2, pressure);
+        int x = ThingSpeak.writeFields(chan_id, key);
+        if(x == 200){
+          display.drawString(3,0,"Channel update successful.");
+        }
+        else{
+          display.drawString(3,0, "Problem updating channel.\n HTTP error code " + String(x));
+        }
+
+        Serial.print(data);
+        //display.drawString(20,22, "température : " + temperature + " °C\npression: "+ pressure + " hPa");
+        display.display();
+      }
+      else
+      {
+        display.drawString(20,22, "no data received");
+        display.display();
+      }
+   
     }
     // print RSSI of packet
     Serial.print(" with RSSI ");
@@ -71,5 +150,6 @@ void loop() {
     display.drawString(20, 45, "RSSI:  ");
     display.drawString(70, 45, (String)LoRa.packetRssi());
     display.display();
+    delay(20000);
   }
 }

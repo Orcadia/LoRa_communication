@@ -58,37 +58,28 @@ void setup() {
 }
 
 void loop() {
-  float pressure = random(950, 1050) / 10.0; // generate a random pressure value between 950 and 1050 hPa
-  float temperature = random(15, 35) / 10.0; // generate a random temperature value between 15 and 35 degrees Celsius
+  double pressure = random(9500, 10500) / 10.0; // generate a random pressure value between 950 and 1050 hPa
+  double temperature = random(150, 350) / 10.0; // generate a random temperature value between 15 and 35 degrees Celsius
+
+  String message = "#" + String(temperature) + "," + String(pressure);
 
   Serial.print("Sending packet: ");
-  Serial.print("Pressure: ");
-  Serial.print(pressure);
-  Serial.print(", Temperature: ");
-  Serial.println(temperature);
+  Serial.print(message);
 
   display.clear();
   display.setFont(ArialMT_Plain_10);
   display.drawString(3, 5, "Sending packet ");
   display.drawString(50, 30, String(counter));
-  display.drawString(3, 50, "Pressure: ");
-  display.drawString(60, 50, String(pressure));
-  display.drawString(3, 70, "Temperature: ");
-  display.drawString(60, 70, String(temperature));
+  display.drawString(3, 50, message);
   display.display();
 
   // send packet
   LoRa.beginPacket();
-  LoRa.print("Pressure: ");
-  LoRa.print(pressure);
-  LoRa.print("\nTemperature: ");
-  LoRa.print(temperature);
+  LoRa.print(message);  
   LoRa.endPacket();
 
   counter++;
   digitalWrite(25, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(1000);                       // wait for a second
   digitalWrite(25, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);                       // wait for a second
-  delay(3000);
 }
