@@ -88,8 +88,8 @@ void loop() {
       String temperature  = "";
       String pressure     = "";
 
-      if(data.startsWith("#",0)){
-        data.replace("#","");
+      if(data.startsWith("nNg0Twgzs5",0)){
+        data.replace("nNg0Twgzs5","");
 
         int delimiterIndex  = data.indexOf(",");
         //display.drawString(10,22, String(delimiterIndex)); // Debugging

@@ -61,7 +61,7 @@ void loop() {
   double pressure = random(9500, 10500) / 10.0; // generate a random pressure value between 950 and 1050 hPa
   double temperature = random(150, 350) / 10.0; // generate a random temperature value between 15 and 35 degrees Celsius
 
-  String message = "#" + String(temperature) + "," + String(pressure);
+  String message = "nNg0Twgzs5" + String(temperature) + "," + String(pressure);
 
   Serial.print("Sending packet: ");
   Serial.print(message);
